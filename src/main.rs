@@ -20,8 +20,8 @@ impl Dvd {
     }
     fn update(&mut self, bounce_sound: &macroquad::audio::Sound) {
         let mut bounce_events = || {
+            play_sound(&bounce_sound, PlaySoundParams{looped: false, volume: 0.1});
             self.hue = (self.hue + 0.05) % 1.0;
-            play_sound(bounce_sound, PlaySoundParams{looped: false, volume: 0.5});
         };
 
         self.position.x += self.velocity.x * get_frame_time();
@@ -66,7 +66,7 @@ fn window_conf() -> Conf {
     }
 }
 
-#[macroquad::main("DVD")]
+#[macroquad::main(window_conf)]
 async fn main() {
     println!("DVD");
 
