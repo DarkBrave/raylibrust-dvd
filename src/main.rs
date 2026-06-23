@@ -16,7 +16,7 @@ impl Dvd {
             hue: 0.0
         }
     }
-    fn update(&mut self, screen: &Vector2, dt: &f32, bounce_sound: &Sound) {
+    fn update(&mut self, screen: &Vector2, dt: f32, bounce_sound: &Sound) {
         let mut bounce_events = || {
             self.hue = (self.hue + 30.0) % 360.0;
             bounce_sound.play();
@@ -54,11 +54,13 @@ fn main() {
     let dvd_texture: Texture2D = rl.load_texture(&thread, "assets/dvd.png").unwrap();
     let dvd_source: Rectangle = Rectangle::new(0.0, 0.0, dvd_texture.width as f32, dvd_texture.height as f32);
 
-    let mut dvd = Dvd::new(
+
+    let mut dvds: Vec<Dvd> = Vec::new();
+    dvds.push(Dvd::new(
         Vector2::new(rl.get_screen_width() as f32/2.0, rl.get_screen_height() as f32/2.0),
         Vector2::new(600.0, 300.0),
         Vector2::new(150.0, 80.0)
-    );
+    ));
 
     let audio: RaylibAudio = RaylibAudio::init_audio_device().unwrap();
     let music: Music = audio.new_music("assets/music.ogg").unwrap();
@@ -72,11 +74,15 @@ fn main() {
         let dt: f32 = rl.get_frame_time();
         let screen: Vector2 = {Vector2::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32)};
 
-        dvd.update(&screen, &dt, &bounce_sound);
+        for dvd in &mut dvds {
+            dvd.update(&screen, dt, &bounce_sound);
+        }
 
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
 
-        dvd.draw(&mut d, &dvd_texture, &dvd_source);
+        for dvd in &mut dvds {
+            dvd.draw(&mut d, &dvd_texture, &dvd_source);
+        }
     }
 }
