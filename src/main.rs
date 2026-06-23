@@ -1,3 +1,4 @@
+use rand::RngExt;
 use raylib::prelude::*;
 
 struct Dvd {
@@ -67,10 +68,21 @@ fn main() {
     let bounce_sound: Sound = audio.new_sound("assets/bounce.ogg").unwrap();
     bounce_sound.set_volume(0.1);
 
+    let mut rng = rand::rng();
+
     music.play_stream();
 
     while !rl.window_should_close() {
         music.update_stream();
+
+        if (rl.is_key_pressed(KeyboardKey::KEY_A)) {
+            dvds.push(Dvd::new(
+                Vector2::new(rl.get_screen_width() as f32/2.0, rl.get_screen_height() as f32/2.0),
+                Vector2::new(rng.random_range(-1000.0..1000.0), rng.random_range(-800.0..800.0)),
+                Vector2::new(150.0, 80.0)
+            ));
+        }
+
         let dt: f32 = rl.get_frame_time();
         let screen: Vector2 = {Vector2::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32)};
 
