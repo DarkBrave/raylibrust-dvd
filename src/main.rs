@@ -1,5 +1,5 @@
 use macroquad::prelude::*;
-use macroquad::audio::{load_sound, play_sound, play_sound_once, PlaySoundParams};
+use macroquad::audio::{load_sound, play_sound, PlaySoundParams};
 use macroquad::color;
 
 struct Dvd {
