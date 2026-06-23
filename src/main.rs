@@ -1,14 +1,16 @@
-use raylib::prelude::*;
+use macroquad::prelude::*;
+use macroquad::audio::{load_sound, play_sound, play_sound_once, PlaySoundParams};
+use macroquad::color;
 
 struct Dvd {
-    position: Vector2,
-    velocity: Vector2,
-    size: Vector2,
+    position: Vec2,
+    velocity: Vec2,
+    size: Vec2,
     hue: f32
 }
 
 impl Dvd {
-    fn new(position: Vector2, velocity: Vector2, size: Vector2) -> Self {
+    fn new(position: Vec2, velocity: Vec2, size: Vec2) -> Self {
         Self {
             position,
             velocity,
@@ -16,73 +18,81 @@ impl Dvd {
             hue: 0.0
         }
     }
-    fn update(&mut self, screen: &Vector2, dt: f32, bounce_sound: &Sound) {
+    fn update(&mut self, bounce_sound: &macroquad::audio::Sound) {
         let mut bounce_events = || {
-            self.hue = (self.hue + 30.0) % 360.0;
-            bounce_sound.play();
+            self.hue = (self.hue + 0.05) % 1.0;
+            play_sound(bounce_sound, PlaySoundParams{looped: false, volume: 0.5});
         };
 
-        self.position.x += self.velocity.x * dt;
-        self.position.y += self.velocity.y * dt;
+        self.position.x += self.velocity.x * get_frame_time();
+        self.position.y += self.velocity.y * get_frame_time();
 
-        if self.position.x <= 0.0 || self.position.x >= screen.x - self.size.x {
+        if self.position.x <= 0.0 || self.position.x >= screen_width() - self.size.x {
             self.velocity.x = -self.velocity.x;
             bounce_events();
         }
-        if self.position.y <= 0.0 || self.position.y >= screen.y - self.size.y {
+        if self.position.y <= 0.0 || self.position.y >= screen_height() - self.size.y {
             self.velocity.y = -self.velocity.y;
             bounce_events();
         }
-        self.position.x = self.position.x.clamp(0.0, screen.x - self.size.x);
-        self.position.y = self.position.y.clamp(0.0, screen.y - self.size.y);
+        self.position.x = self.position.x.clamp(0.0, screen_width() - self.size.x);
+        self.position.y = self.position.y.clamp(0.0, screen_height() - self.size.y);
     }
-    fn draw(&self, d: &mut RaylibDrawHandle, texture: &Texture2D, source: &Rectangle) {
-        let dvd_logo: Rectangle = Rectangle::new(self.position.x, self.position.y, self.size.x, self.size.y);
-        let current_color = Color::color_from_hsv(self.hue, 1.0, 1.0);
-        d.draw_texture_pro(&texture, *source, dvd_logo, Vector2::new(0.0, 0.0), 0.0, current_color);
+    fn draw(&self, texture: &Texture2D) {
+        let rgb = color::hsl_to_rgb(self.hue,1.0,0.5);
+        draw_texture_ex(
+            &texture,
+            self.position.x, self.position.y,
+            rgb,
+            DrawTextureParams {
+                dest_size: Some(vec2(self.size.x, self.size.y)),
+                ..Default::default()
+            },
+        );
     }
 }
 
-fn main() {
-    println!("Test App");
-    let (mut rl, thread) = raylib::init()
-        .size(900, 600)
-        .title("DVD")
-        .resizable()
-        .build();
+fn window_conf() -> Conf {
+    Conf {
+        window_title: "DVD".to_string(),
+        window_width: 900,
+        window_height: 600,
+        window_resizable: true,
+        fullscreen: false,
+        high_dpi: true,
+        sample_count: 4,
+        icon: None,
+        platform: Default::default(),
+    }
+}
 
-    let dvd_texture: Texture2D = rl.load_texture(&thread, "assets/dvd.png").unwrap();
-    let dvd_source: Rectangle = Rectangle::new(0.0, 0.0, dvd_texture.width as f32, dvd_texture.height as f32);
+#[macroquad::main("DVD")]
+async fn main() {
+    println!("DVD");
 
+    let dvd_texture: Texture2D = load_texture("assets/dvd.png").await.unwrap();
 
     let mut dvds: Vec<Dvd> = Vec::new();
     dvds.push(Dvd::new(
-        Vector2::new(rl.get_screen_width() as f32/2.0, rl.get_screen_height() as f32/2.0),
-        Vector2::new(600.0, 300.0),
-        Vector2::new(150.0, 80.0)
+        Vec2::new(screen_width()/2.0, screen_height()/2.0),
+        Vec2::new(600.0, 300.0),
+        Vec2::new(150.0, 80.0)
     ));
 
-    let audio: RaylibAudio = RaylibAudio::init_audio_device().unwrap();
-    let music: Music = audio.new_music("assets/music.ogg").unwrap();
-    let bounce_sound: Sound = audio.new_sound("assets/bounce.ogg").unwrap();
-    bounce_sound.set_volume(0.1);
+    let music: macroquad::audio::Sound = load_sound("assets/music.ogg").await.unwrap();
+    let bounce_sound: macroquad::audio::Sound = load_sound("assets/bounce.ogg").await.unwrap();
 
-    music.play_stream();
+    play_sound(&music, PlaySoundParams {looped: true, volume:1.0});
 
-    while !rl.window_should_close() {
-        music.update_stream();
-        let dt: f32 = rl.get_frame_time();
-        let screen: Vector2 = {Vector2::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32)};
+    loop {
+        for dvd in &mut dvds {
+            dvd.update(&bounce_sound);
+        }
+        clear_background(BLACK);
 
         for dvd in &mut dvds {
-            dvd.update(&screen, dt, &bounce_sound);
+            dvd.draw(&dvd_texture);
         }
-
-        let mut d = rl.begin_drawing(&thread);
-        d.clear_background(Color::BLACK);
-
-        for dvd in &mut dvds {
-            dvd.draw(&mut d, &dvd_texture, &dvd_source);
-        }
+        next_frame().await;
     }
 }
