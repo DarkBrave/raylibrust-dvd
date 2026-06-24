@@ -72,19 +72,18 @@ fn main() {
         dvd_size
     ));
 
-    let mut debug_overlay: bool = false;
-    let mut spam_dvds: bool = false;
-
     let audio: RaylibAudio = RaylibAudio::init_audio_device().unwrap();
     let music: Music = audio.new_music("assets/music.ogg").unwrap();
     let bounce_sound: Sound = audio.new_sound("assets/bounce.ogg").unwrap();
     bounce_sound.set_volume(0.1);
 
+    let mut debug_overlay: bool = false;
+    let mut spam_dvds: bool = false;
+    let mut play_music: bool = true;
+
     music.play_stream();
 
     while !rl.window_should_close() {
-        music.update_stream();
-
         let dt: f32 = rl.get_frame_time();
         let screen: Vector2 = {Vector2::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32)};
 
@@ -92,6 +91,16 @@ fn main() {
         if rl.is_key_pressed(KeyboardKey::KEY_S) { spam_dvds = !spam_dvds; }
         if rl.is_key_pressed(KeyboardKey::KEY_C) { dvds.clear(); }
         if rl.is_key_pressed(KeyboardKey::KEY_D) { debug_overlay = !debug_overlay; }
+        if rl.is_key_pressed(KeyboardKey::KEY_M) { play_music = !play_music; }
+
+        if play_music {
+            if !music.is_stream_playing() {
+                music.play_stream();
+            }
+            music.update_stream();
+        } else {
+            music.stop_stream();
+        }
 
         if spam_dvds {
             dvds.push(Dvd::new_random(dvd_size, &screen, &mut rng))
