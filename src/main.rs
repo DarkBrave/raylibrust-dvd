@@ -25,10 +25,10 @@ impl Dvd {
             hue: 0.0
         }
     }
-    fn update(&mut self, screen: &Vector2, dt: f32, bounce_sound: &Sound) {
+    fn update(&mut self, screen: &Vector2, dt: f32, bounce_sound: &Sound, play_bounce_sound: bool) {
         let mut bounce_events = || {
             self.hue = (self.hue + 30.0) % 360.0;
-            bounce_sound.play();
+            if play_bounce_sound { bounce_sound.play(); }
         };
 
         self.position.x += self.velocity.x * dt;
@@ -80,6 +80,7 @@ fn main() {
     let mut debug_overlay: bool = false;
     let mut spam_dvds: bool = false;
     let mut play_music: bool = true;
+    let mut play_bounce_sound: bool = true;
 
     music.play_stream();
 
@@ -92,6 +93,7 @@ fn main() {
         if rl.is_key_pressed(KeyboardKey::KEY_C) { dvds.clear(); }
         if rl.is_key_pressed(KeyboardKey::KEY_D) { debug_overlay = !debug_overlay; }
         if rl.is_key_pressed(KeyboardKey::KEY_M) { play_music = !play_music; }
+        if rl.is_key_pressed(KeyboardKey::KEY_B) { play_bounce_sound = !play_bounce_sound; }
 
         if play_music {
             if !music.is_stream_playing() {
@@ -107,7 +109,7 @@ fn main() {
         }
 
         for dvd in &mut dvds {
-            dvd.update(&screen, dt, &bounce_sound);
+            dvd.update(&screen, dt, &bounce_sound, play_bounce_sound);
         }
 
         let mut d = rl.begin_drawing(&thread);
