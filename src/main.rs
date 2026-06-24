@@ -17,6 +17,14 @@ impl Dvd {
             hue: 0.0
         }
     }
+    fn new_random(size: Vector2, screen: &Vector2, rng: &mut rand::rngs::ThreadRng) -> Self {
+        Self {
+            position: Vector2::new(rng.random_range(0.0..(screen.x-size.x)), rng.random_range(0.0..(screen.y-size.y))),
+            velocity: Vector2::new(rng.random_range(-1000.0..1000.0), rng.random_range(-800.0..800.0)),
+            size,
+            hue: 0.0
+        }
+    }
     fn update(&mut self, screen: &Vector2, dt: f32, bounce_sound: &Sound) {
         let mut bounce_events = || {
             self.hue = (self.hue + 30.0) % 360.0;
@@ -46,7 +54,7 @@ impl Dvd {
 
 fn main() {
     println!("Test App");
-    let (mut rl, thread) = raylib::init()
+    let (mut rl, thread) = init()
         .size(900, 600)
         .title("DVD")
         .resizable()
@@ -55,20 +63,14 @@ fn main() {
 
     let dvd_texture: Texture2D = rl.load_texture(&thread, "assets/dvd.png").unwrap();
     let dvd_source: Rectangle = Rectangle::new(0.0, 0.0, dvd_texture.width as f32, dvd_texture.height as f32);
+    let dvd_size: Vector2 = Vector2::new(150.0, 80.0);
 
     let mut dvds: Vec<Dvd> = Vec::new();
     dvds.push(Dvd::new(
         Vector2::new(rl.get_screen_width() as f32/2.0, rl.get_screen_height() as f32/2.0),
         Vector2::new(600.0, 300.0),
-        Vector2::new(150.0, 80.0)
+        dvd_size
     ));
-    let add_dvd_random = |dvds: &mut Vec<Dvd>, screen: &Vector2, rng: &mut rand::rngs::ThreadRng| {
-        dvds.push(Dvd::new(
-            Vector2::new(rng.random_range(0.0..screen.x), rng.random_range(0.0..screen.y)),
-            Vector2::new(rng.random_range(-1000.0..1000.0), rng.random_range(-800.0..800.0)),
-            Vector2::new(150.0, 80.0)
-        ));
-    };
 
     let mut debug_overlay: bool = false;
     let mut spam_dvds: bool = false;
@@ -83,15 +85,17 @@ fn main() {
     while !rl.window_should_close() {
         music.update_stream();
 
-        if rl.is_key_pressed(KeyboardKey::KEY_A) { add_dvd_random(&mut dvds, &Vector2::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32), & mut rng); }
+        let dt: f32 = rl.get_frame_time();
+        let screen: Vector2 = {Vector2::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32)};
+
+        if rl.is_key_pressed(KeyboardKey::KEY_A) { dvds.push(Dvd::new_random(dvd_size, &screen, &mut rng)) }
         if rl.is_key_pressed(KeyboardKey::KEY_S) { spam_dvds = !spam_dvds; }
         if rl.is_key_pressed(KeyboardKey::KEY_C) { dvds.clear(); }
         if rl.is_key_pressed(KeyboardKey::KEY_D) { debug_overlay = !debug_overlay; }
 
-        if(spam_dvds) {add_dvd_random(&mut dvds, &Vector2::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32), &mut rng);}
-
-        let dt: f32 = rl.get_frame_time();
-        let screen: Vector2 = {Vector2::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32)};
+        if spam_dvds {
+            dvds.push(Dvd::new_random(dvd_size, &screen, &mut rng))
+        }
 
         for dvd in &mut dvds {
             dvd.update(&screen, dt, &bounce_sound);
