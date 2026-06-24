@@ -26,9 +26,11 @@ impl Dvd {
         }
     }
     fn update(&mut self, screen: &Vector2, dt: f32, bounce_sound: &Sound, play_bounce_sound: bool) {
+        let mut already_bounced: bool = false;
         let mut bounce_events = || {
             self.hue = (self.hue + 30.0) % 360.0;
-            if play_bounce_sound { bounce_sound.play(); }
+            if play_bounce_sound && !already_bounced { bounce_sound.play(); }
+            already_bounced = true;
         };
 
         self.position.x += self.velocity.x * dt;
@@ -67,7 +69,7 @@ fn main() {
 
     let mut dvds: Vec<Dvd> = Vec::new();
     dvds.push(Dvd::new(
-        Vector2::new(rl.get_screen_width() as f32/2.0, rl.get_screen_height() as f32/2.0),
+        Vector2::new((rl.get_screen_width() as f32 / 2.0 - dvd_size.x / 2.0), (rl.get_screen_height() as f32 / 2.0 - dvd_size.y / 2.0)),
         Vector2::new(600.0, 300.0),
         dvd_size
     ));
@@ -86,7 +88,7 @@ fn main() {
 
     while !rl.window_should_close() {
         let dt: f32 = rl.get_frame_time();
-        let screen: Vector2 = {Vector2::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32)};
+        let screen: Vector2 = Vector2::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32);
 
         if rl.is_key_pressed(KeyboardKey::KEY_A) { dvds.push(Dvd::new_random(dvd_size, &screen, &mut rng)) }
         if rl.is_key_pressed(KeyboardKey::KEY_S) { spam_dvds = !spam_dvds; }
@@ -115,7 +117,7 @@ fn main() {
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
 
-        for dvd in &mut dvds {
+        for dvd in &dvds {
             dvd.draw(&mut d, &dvd_texture, &dvd_source);
         }
         if debug_overlay {
