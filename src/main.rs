@@ -98,21 +98,13 @@ fn main() {
         if rl.is_key_pressed(KeyboardKey::KEY_B) { play_bounce_sound = !play_bounce_sound; }
 
         if play_music {
-            if !music.is_stream_playing() {
-                music.play_stream();
-            }
+            if !music.is_stream_playing() { music.play_stream(); }
             music.update_stream();
-        } else {
-            music.stop_stream();
-        }
+        } else { music.stop_stream(); }
 
-        if spam_dvds {
-            dvds.push(Dvd::new_random(dvd_size, &screen, &mut rng))
-        }
+        if spam_dvds { dvds.push(Dvd::new_random(dvd_size, &screen, &mut rng)) }
 
-        for dvd in &mut dvds {
-            dvd.update(&screen, dt, &bounce_sound, play_bounce_sound);
-        }
+        for dvd in &mut dvds { dvd.update(&screen, dt, &bounce_sound, play_bounce_sound); }
 
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
