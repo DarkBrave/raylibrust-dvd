@@ -55,7 +55,7 @@ impl Dvd {
 }
 
 fn main() {
-    println!("Test App");
+    println!("DVD App");
     let (mut rl, thread) = init()
         .size(900, 600)
         .title("DVD")
@@ -69,7 +69,8 @@ fn main() {
 
     let mut dvds: Vec<Dvd> = Vec::new();
     dvds.push(Dvd::new(
-        Vector2::new((rl.get_screen_width() as f32 / 2.0 - dvd_size.x / 2.0), (rl.get_screen_height() as f32 / 2.0 - dvd_size.y / 2.0)),
+        Vector2::new(rl.get_screen_width() as f32 / 2.0 - dvd_size.x / 2.0,
+                     rl.get_screen_height() as f32 / 2.0 - dvd_size.y / 2.0),
         Vector2::new(600.0, 300.0),
         dvd_size
     ));
@@ -96,6 +97,7 @@ fn main() {
         if rl.is_key_pressed(KeyboardKey::KEY_D) { debug_overlay = !debug_overlay; }
         if rl.is_key_pressed(KeyboardKey::KEY_M) { play_music = !play_music; }
         if rl.is_key_pressed(KeyboardKey::KEY_B) { play_bounce_sound = !play_bounce_sound; }
+        if rl.is_key_pressed(KeyboardKey::KEY_P) { dvds.sort_by(|a, b| a.position.x.partial_cmp(&b.position.x).unwrap()); }
 
         if play_music {
             if !music.is_stream_playing() { music.play_stream(); }
@@ -104,7 +106,9 @@ fn main() {
 
         if spam_dvds { dvds.push(Dvd::new_random(dvd_size, &screen, &mut rng)) }
 
-        for dvd in &mut dvds { dvd.update(&screen, dt, &bounce_sound, play_bounce_sound); }
+        for dvd in &mut dvds {
+            dvd.update(&screen, dt, &bounce_sound, play_bounce_sound);
+        }
 
         let mut d = rl.begin_drawing(&thread);
         d.clear_background(Color::BLACK);
