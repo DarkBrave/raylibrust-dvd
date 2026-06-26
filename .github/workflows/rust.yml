@@ -16,6 +16,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Install X11
+      run: |
+        sudo add-apt-repository ppa:oibaf/graphics-drivers
+        sudo apt-get update
+        sudo apt-get full-upgrade -y
+        sudo apt-get install -y mesa-utils
+    - name: Status X11
+      uses: GabrielBB/xvfb-action@v1
+      with:
+        run: glxinfo -B
     - name: Build
       run: cargo build --verbose
     - name: Run tests
